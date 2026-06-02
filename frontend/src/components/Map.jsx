@@ -17,13 +17,13 @@ const CATEGORY_LABELS = Object.fromEntries(
 
 /** Map a 0–1 relative score (best=1, worst=0 in this batch) to marker style. */
 function scoreToStyle(relativeScore) {
-  if (relativeScore >= 0.65) return { color: '#E8593C', radius: 10, opacity: 0.85 }
-  if (relativeScore >= 0.50) return { color: '#EF9F27', radius: 7, opacity: 0.7 }
-  if (relativeScore >= 0.40) return { color: '#888888', radius: 5, opacity: 0.5 }
+  if (relativeScore >= 0.65) return { color: '#9e3c39', radius: 10, opacity: 0.90 }
+  if (relativeScore >= 0.50) return { color: '#d19c4d', radius: 7, opacity: 0.75 }
+  if (relativeScore >= 0.40) return { color: '#857272', radius: 5, opacity: 0.55 }
   return null
 }
 
-const DEFAULT_STYLE = { color: '#888888', radius: 8, opacity: 0.7 }
+const DEFAULT_STYLE = { color: '#857272', radius: 8, opacity: 0.7 }
 
 export default function PlacesMap({
   places = [],
