@@ -1,0 +1,247 @@
+.landing {
+  position: relative;
+  min-height: 100svh;
+  overflow: hidden;
+}
+
+.landing-map {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.landing-map__container {
+  width: 100%;
+  height: 100%;
+  background: var(--code-bg);
+}
+
+/* Pop-in when each marker is revealed */
+.landing-map__marker {
+  animation: landing-marker-pop 0.55s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+
+@keyframes landing-marker-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.landing-map-overlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.landing-cursor {
+  position: absolute;
+  transform: translate(-4px, -4px);
+  transition: left 0.85s cubic-bezier(0.4, 0, 0.2, 1),
+    top 0.85s cubic-bezier(0.4, 0, 0.2, 1);
+  filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.35));
+  z-index: 2;
+}
+
+.landing-cursor__icon {
+  display: block;
+  animation: landing-cursor-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes landing-cursor-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.landing-tooltip {
+  position: absolute;
+  max-width: 14rem;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: var(--shadow);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.landing-tooltip--above {
+  transform: translateY(-100%);
+  animation: landing-tooltip-in-above 0.35s ease-out forwards;
+}
+
+.landing-tooltip--below {
+  animation: landing-tooltip-in-below 0.35s ease-out forwards;
+}
+
+.landing-tooltip strong {
+  font-weight: 600;
+}
+
+.landing-tooltip em {
+  font-style: italic;
+  color: var(--text);
+  font-size: 0.78rem;
+}
+
+@keyframes landing-tooltip-in-above {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-100% + 6px));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(-100%);
+  }
+}
+
+@keyframes landing-tooltip-in-below {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.landing__scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    105deg,
+    var(--bg) 0%,
+    rgba(255, 255, 255, 0.92) 28%,
+    rgba(255, 255, 255, 0.55) 48%,
+    rgba(255, 255, 255, 0.15) 72%,
+    transparent 100%
+  );
+}
+
+@media (prefers-color-scheme: dark) {
+  .landing__scrim {
+    background: linear-gradient(
+      105deg,
+      var(--bg) 0%,
+      rgba(22, 23, 29, 0.94) 28%,
+      rgba(22, 23, 29, 0.72) 48%,
+      rgba(22, 23, 29, 0.35) 72%,
+      transparent 100%
+    );
+  }
+}
+
+.landing__hero {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 100svh;
+  max-width: 28rem;
+  padding: 2.5rem clamp(1.5rem, 5vw, 4rem);
+  box-sizing: border-box;
+}
+
+.landing__eyebrow {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.landing__title {
+  margin: 0 0 1rem;
+  font-family: var(--heading);
+  font-size: clamp(3rem, 10vw, 4.5rem);
+  font-weight: 500;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  color: var(--text-h);
+}
+
+.landing__tagline {
+  margin: 0 0 2rem;
+  font-size: 1.05rem;
+  line-height: 1.55;
+  color: var(--text);
+  max-width: 22rem;
+}
+
+.landing__cta {
+  align-self: flex-start;
+  padding: 0.75rem 1.75rem;
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.landing__cta:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.landing__cta:active {
+  transform: translateY(0);
+}
+
+@media (max-width: 640px) {
+  .landing__scrim {
+    background: linear-gradient(
+      to bottom,
+      var(--bg) 0%,
+      rgba(255, 255, 255, 0.88) 35%,
+      rgba(255, 255, 255, 0.5) 55%,
+      transparent 75%
+    );
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .landing__scrim {
+      background: linear-gradient(
+        to bottom,
+        var(--bg) 0%,
+        rgba(22, 23, 29, 0.9) 35%,
+        rgba(22, 23, 29, 0.55) 55%,
+        transparent 75%
+      );
+    }
+  }
+
+  .landing__hero {
+    justify-content: flex-end;
+    padding-bottom: 3rem;
+    max-width: none;
+  }
+
+  .landing-tooltip {
+    max-width: 11rem;
+    font-size: 0.72rem;
+  }
+}

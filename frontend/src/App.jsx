@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import Landing from './components/Landing'
 import Onboarding from './components/Onboarding'
 import PlacesMap from './components/Map'
 import CitySearch from './components/CitySearch'
@@ -20,6 +21,7 @@ import { rescorePlaces, stripEmbeddings } from './utils/rescorePlaces'
 const API = import.meta.env.VITE_API_URL
 
 export default function App() {
+  const [showLanding, setShowLanding] = useState(true)
   const [userProfile, setUserProfile] = useState(null)
   const [places, setPlaces] = useState([])
   const [placesCache, setPlacesCache] = useState([])
@@ -100,6 +102,10 @@ export default function App() {
     if (userProfile) {
       loadPlaces(userProfile.embedding, newCity)
     }
+  }
+
+  if (showLanding) {
+    return <Landing onGetStarted={() => setShowLanding(false)} />
   }
 
   if (!userProfile) {

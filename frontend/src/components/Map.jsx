@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { MapContainer, TileLayer, CircleMarker, Popup } from 'react-leaflet'
+import { ThumbsUp, ThumbsDown } from 'lucide-react';
 import axios from 'axios'
 import {
   getPlaceCategories,
@@ -150,7 +151,7 @@ export default function PlacesMap({
                         title="More like this"
                         aria-label="Thumbs up"
                       >
-                        👍
+                        <ThumbsUp size={16} />
                       </button>
                       <button
                         type="button"
@@ -163,7 +164,7 @@ export default function PlacesMap({
                         title="Less like this"
                         aria-label="Thumbs down"
                       >
-                        👎
+                        <ThumbsDown size={16} />
                       </button>
                     </div>
                   )}
