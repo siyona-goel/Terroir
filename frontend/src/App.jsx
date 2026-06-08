@@ -28,6 +28,7 @@ export default function App() {
   // No default city — set only after onboarding city picker or map search
   const [city, setCity] = useState(null)
   const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState(null)
   const [activeCategories, setActiveCategories] = useState(new Set())
   const [minMatchPercent, setMinMatchPercent] = useState(0)
 
@@ -76,6 +77,7 @@ export default function App() {
 
   const loadPlaces = async (embedding, targetCity) => {
     setLoading(true)
+    setLoadError(null)
     try {
       const res = await axios.post(`${API}/score`, {
         lat: targetCity.lat,
@@ -83,6 +85,13 @@ export default function App() {
         user_embedding: embedding,
       })
       applyScoredPlaces(res.data, embedding)
+    } catch (err) {
+      const detail = err.response?.data?.detail
+      setLoadError(
+        typeof detail === 'string'
+          ? detail
+          : 'Could not load places. Please try again.',
+      )
     } finally {
       setLoading(false)
     }
@@ -155,7 +164,33 @@ export default function App() {
           totalCount={places.length}
         />
       </div>
-      {loading && (
+      {loadError && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 60,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 1000,
+            padding: '0.5rem 1rem',
+            background: 'var(--bg)',
+            border: '1px solid var(--border)',
+            borderRadius: 6,
+            boxShadow: 'var(--shadow)',
+            maxWidth: 420,
+            textAlign: 'center',
+          }}
+        >
+          <p style={{ margin: '0 0 0.5rem' }}>{loadError}</p>
+          <button
+            type="button"
+            onClick={() => loadPlaces(userProfile.embedding, city)}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+      {loading && !loadError && (
         <div
           style={{
             position: 'absolute',

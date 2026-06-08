@@ -10,7 +10,7 @@ from pydantic import BaseModel
 
 from embeddings import embed, embed_batch
 from llm import extract_profile, generate_match_reason
-from overpass import fetch_places, tags_to_text
+from overpass import OverpassError, fetch_places, tags_to_text
 from scoring import score_places, update_embedding_from_feedback
 
 logging.basicConfig(level=logging.INFO)
@@ -84,7 +84,10 @@ def get_reason(req: ReasonRequest):
 
 @app.post("/score")
 def score_city(req: ScoreRequest):
-    raw_places = fetch_places(req.lat, req.lon, req.radius)
+    try:
+        raw_places = fetch_places(req.lat, req.lon, req.radius)
+    except OverpassError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     places = [
         {
             "id": p["id"],
@@ -125,7 +128,10 @@ def create_profile(req: ProfileRequest):
 
 @app.get("/places")
 def get_places(lat: float, lon: float, radius: int = 3000):
-    places = fetch_places(lat, lon, radius)
+    try:
+        places = fetch_places(lat, lon, radius)
+    except OverpassError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     return [
         {
             "id": p["id"],
