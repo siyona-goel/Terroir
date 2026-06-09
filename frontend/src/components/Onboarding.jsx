@@ -57,6 +57,7 @@ export default function Onboarding({ onComplete }) {
   if (loading) {
     return (
       <div className="onboarding onboarding--loading">
+        <div className="onboarding__spinner" />
         <p className="onboarding__status">Building your taste profile…</p>
       </div>
     )
