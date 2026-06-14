@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
+import { SignedIn, SignedOut, SignInButton, useAuth, useUser } from '@clerk/clerk-react'
 import Landing from './components/Landing'
 import Onboarding from './components/Onboarding'
 import PlacesMap from './components/Map'
@@ -20,12 +21,15 @@ import { rescorePlaces, stripEmbeddings } from './utils/rescorePlaces'
 
 const API = import.meta.env.VITE_API_URL
 
-export default function App() {
+function AuthedApp() {
+  const { user, isLoaded } = useUser()
+  const { getToken } = useAuth()
+
   const [showLanding, setShowLanding] = useState(true)
   const [userProfile, setUserProfile] = useState(null)
+  const [profileLoading, setProfileLoading] = useState(true)
   const [places, setPlaces] = useState([])
   const [placesCache, setPlacesCache] = useState([])
-  // No default city — set only after onboarding city picker or map search
   const [city, setCity] = useState(null)
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState(null)
@@ -61,10 +65,50 @@ export default function App() {
     return counts
   }, [places])
 
-  /** Profile only — city selection and map load happen in handleCitySelect. */
-  const handleProfileComplete = (data) => {
+  useEffect(() => {
+    if (!isLoaded || !user) return
+
+    const loadProfile = async () => {
+      try {
+        const token = await getToken()
+        const res = await axios.get(`${API}/profile/load`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (res.data.profile && res.data.embedding) {
+          setUserProfile({ profile: res.data.profile, embedding: res.data.embedding })
+          localStorage.setItem('profile_summary', res.data.profile.summary)
+          setShowLanding(false)
+        }
+      } catch (err) {
+        console.warn('Could not load profile:', err)
+      } finally {
+        setProfileLoading(false)
+      }
+    }
+
+    loadProfile()
+  }, [isLoaded, user])
+
+  const handleProfileComplete = async (data) => {
+    try {
+      const token = await getToken()
+      await axios.post(
+        `${API}/profile/save`,
+        { profile: data.profile, embedding: data.embedding },
+        { headers: { Authorization: `Bearer ${token}` } },
+      )
+    } catch (err) {
+      console.warn('Could not save profile:', err)
+    }
     setUserProfile(data)
     localStorage.setItem('profile_summary', data.profile.summary)
+  }
+
+  const handleEditProfile = () => {
+    setUserProfile(null)
+    setPlaces([])
+    setPlacesCache([])
+    setCity(null)
   }
 
   const applyScoredPlaces = (scoredWithEmbeddings, embedding) => {
@@ -79,11 +123,12 @@ export default function App() {
     setLoading(true)
     setLoadError(null)
     try {
-      const res = await axios.post(`${API}/score`, {
-        lat: targetCity.lat,
-        lon: targetCity.lon,
-        user_embedding: embedding,
-      })
+      const token = await getToken()
+      const res = await axios.post(
+        `${API}/score`,
+        { lat: targetCity.lat, lon: targetCity.lon, user_embedding: embedding },
+        { headers: { Authorization: `Bearer ${token}` } },
+      )
       applyScoredPlaces(res.data, embedding)
     } catch (err) {
       const detail = err.response?.data?.detail
@@ -97,12 +142,21 @@ export default function App() {
     }
   }
 
-  const handleFeedback = (newEmbedding) => {
+  const handleFeedback = async (newEmbedding) => {
     const rescored = rescorePlaces(newEmbedding, placesCache)
     applyScoredPlaces(rescored, newEmbedding)
+
+    getToken().then((token) => {
+      axios
+        .post(
+          `${API}/profile/feedback`,
+          { embedding: newEmbedding },
+          { headers: { Authorization: `Bearer ${token}` } },
+        )
+        .catch((err) => console.warn('Could not persist feedback embedding:', err))
+    })
   }
 
-  /** First city after onboarding, or changing city from the map search bar. */
   const handleCitySelect = (newCity) => {
     setCity(newCity)
     setActiveCategories(new Set())
@@ -113,15 +167,22 @@ export default function App() {
     }
   }
 
+  if (profileLoading) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh' }}>
+        <p>Loading…</p>
+      </div>
+    )
+  }
+
   if (showLanding) {
     return <Landing onGetStarted={() => setShowLanding(false)} />
   }
 
   if (!userProfile) {
-    return <Onboarding onComplete={handleProfileComplete} />
+    return <Onboarding onComplete={handleProfileComplete} getToken={getToken} />
   }
 
-  // Taste profile ready — ask for city before showing the map
   if (!city) {
     return (
       <CityPicker onCitySelect={handleCitySelect} loading={loading} />
@@ -163,6 +224,22 @@ export default function App() {
           visibleCount={filteredPlaces.length}
           totalCount={places.length}
         />
+      </div>
+      <div
+        style={{
+          position: 'absolute',
+          top: 16,
+          left: 16,
+          zIndex: 1000,
+        }}
+      >
+        <button
+          type="button"
+          onClick={handleEditProfile}
+          style={{ fontSize: '0.75rem', opacity: 0.75 }}
+        >
+          Edit taste profile
+        </button>
       </div>
       {loadError && (
         <div
@@ -216,5 +293,37 @@ export default function App() {
         relativeScores={relativeScores}
       />
     </div>
+  )
+}
+
+export default function App() {
+  return (
+    <>
+      <SignedOut>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100vh',
+            gap: '1rem',
+            textAlign: 'center',
+            padding: '1rem',
+          }}
+        >
+          <h1 style={{ margin: 0 }}>Terroir</h1>
+          <p style={{ margin: 0, color: 'var(--text-muted, #666)' }}>
+            Discover places that match your taste, wherever you go.
+          </p>
+          <SignInButton mode="modal">
+            <button type="button">Sign in to get started</button>
+          </SignInButton>
+        </div>
+      </SignedOut>
+      <SignedIn>
+        <AuthedApp />
+      </SignedIn>
+    </>
   )
 }

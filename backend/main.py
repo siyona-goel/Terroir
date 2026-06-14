@@ -1,12 +1,14 @@
 import json
 import logging
 import os
-
+from datetime import datetime, timezone
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from clerk_backend_api import AuthenticateRequestOptions, authenticate_request
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from supabase import create_client
 
 from embeddings import embed, embed_batch
 from llm import extract_profile, generate_match_reason
@@ -32,6 +34,31 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+CLERK_SECRET_KEY = os.environ["CLERK_SECRET_KEY"]
+supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_KEY"])
+
+
+async def get_current_user(request: Request) -> str:
+    state = authenticate_request(
+        request,
+        AuthenticateRequestOptions(
+            secret_key=CLERK_SECRET_KEY,
+            authorized_parties=_cors_origins,
+            accepts_token=["session_token"],
+        ),
+    )
+    if not state.is_signed_in:
+        raise HTTPException(
+            status_code=401,
+            detail=state.reason or "Token verification failed",
+        )
+
+    user_id = state.payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="No user ID in verified token")
+
+    return user_id
+
 
 @app.get("/health")
 def health():
@@ -41,6 +68,15 @@ def health():
 
 class ProfileRequest(BaseModel):
     text: str
+
+
+class ProfileSaveRequest(BaseModel):
+    profile: dict
+    embedding: list[float]
+
+
+class ProfileFeedbackRequest(BaseModel):
+    embedding: list[float]
 
 
 class ScoreRequest(BaseModel):
@@ -61,8 +97,55 @@ class FeedbackRequest(BaseModel):
     vote: Literal["thumbs_up", "thumbs_down"]
 
 
+@app.post("/profile/save")
+async def save_profile(req: ProfileSaveRequest, user_id: str = Depends(get_current_user)):
+    try:
+        supabase.table("profiles").upsert(
+            {
+                "user_id": user_id,
+                "profile": req.profile,
+                "embedding": req.embedding,
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+            },
+            on_conflict="user_id",
+        ).execute()
+    except Exception as exc:
+        logger.exception("Failed to save profile for user %s", user_id)
+        raise HTTPException(status_code=502, detail="Could not save profile") from exc
+    return {"success": True}
+
+
+@app.get("/profile/load")
+async def load_profile(user_id: str = Depends(get_current_user)):
+    try:
+        result = supabase.table("profiles").select("profile, embedding").eq("user_id", user_id).maybe_single().execute()
+    except Exception as exc:
+        logger.exception("Failed to load profile for user %s", user_id)
+        raise HTTPException(status_code=502, detail="Could not load profile") from exc
+
+    if result.data is None:
+        return {"profile": None, "embedding": None}
+
+    return {
+        "profile": result.data["profile"],
+        "embedding": result.data["embedding"],
+    }
+
+
+@app.post("/profile/feedback")
+async def persist_feedback_embedding(req: ProfileFeedbackRequest, user_id: str = Depends(get_current_user)):
+    try:
+        supabase.table("profiles").update(
+            {"embedding": req.embedding}
+        ).eq("user_id", user_id).execute()
+    except Exception as exc:
+        logger.exception("Failed to persist feedback embedding for user %s", user_id)
+        raise HTTPException(status_code=502, detail="Could not persist feedback embedding") from exc
+    return {"success": True}
+
+
 @app.post("/feedback")
-def apply_feedback(req: FeedbackRequest):
+async def apply_feedback(req: FeedbackRequest, user_id: str = Depends(get_current_user)):
     place_embedding = embed(req.place_description)
     thumbs_up = req.vote == "thumbs_up"
     new_embedding = update_embedding_from_feedback(
@@ -83,7 +166,7 @@ def get_reason(req: ReasonRequest):
 
 
 @app.post("/score")
-def score_city(req: ScoreRequest):
+async def score_city(req: ScoreRequest, user_id: str = Depends(get_current_user)):
     try:
         raw_places = fetch_places(req.lat, req.lon, req.radius)
     except OverpassError as exc:
@@ -113,7 +196,7 @@ def score_city(req: ScoreRequest):
 
 
 @app.post("/profile")
-def create_profile(req: ProfileRequest):
+async def create_profile(req: ProfileRequest, user_id: str = Depends(get_current_user)):
     try:
         profile = extract_profile(req.text)
         profile_embedding = embed(profile["summary"])

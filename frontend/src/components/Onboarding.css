@@ -131,3 +131,18 @@
   75%  { content: "..."; }
   100% { content: ""; }
 }
+
+.onboarding__actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.onboarding__button--secondary {
+  background: transparent;
+  color: var(--text-h);
+  border: 1px solid var(--border);
+}
+
+.onboarding__button--secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}

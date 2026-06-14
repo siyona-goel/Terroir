@@ -10,41 +10,64 @@ const QUESTIONS = [
   'Name a place you loved visiting and what made it special.',
 ]
 
-export default function Onboarding({ onComplete }) {
+export default function Onboarding({ onComplete, getToken }) {
   const [step, setStep] = useState(0)
   const [answers, setAnswers] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
+  const handleBack = () => {
+  if (step === 0) return
+
+  const previousStep = step - 1
+
+  setStep(previousStep)
+  setInput(answers[previousStep] || '')
+  setError(null)
+  }
+
   const handleNext = async () => {
     const trimmed = input.trim()
     if (!trimmed) return
 
-    const newAnswers = [...answers, trimmed]
+    const newAnswers = [...answers]
+    newAnswers[step] = trimmed
     setInput('')
     setError(null)
 
     if (step < QUESTIONS.length - 1) {
       setAnswers(newAnswers)
       setStep(step + 1)
+      setInput(newAnswers[step + 1] || '')
     } else {
       setLoading(true)
       try {
         const text = QUESTIONS.map(
           (q, i) => `Q: ${q}\nA: ${newAnswers[i]}`,
         ).join('\n\n')
+        // const res = await axios.post(
+        //   `${import.meta.env.VITE_API_URL}/profile`,
+        //   { text },
+        //   { timeout: 300000 },
+        // )
+        const token = await getToken()
         const res = await axios.post(
           `${import.meta.env.VITE_API_URL}/profile`,
           { text },
-          { timeout: 300000 },
+          {
+            timeout: 300000,
+            headers: { Authorization: `Bearer ${token}` },
+          },
         )
         onComplete(res.data)
       } catch (err) {
         const detail = err.response?.data?.detail
         const message = Array.isArray(detail)
           ? detail.map((d) => d.msg || JSON.stringify(d)).join(', ')
-          : detail
+          : typeof detail === 'string'
+            ? detail
+            : err.message
         setError(
           message ||
             'Could not build your profile. Is the backend running with Ollama?',
@@ -78,14 +101,26 @@ export default function Onboarding({ onComplete }) {
         autoFocus
       />
       {error && <p className="onboarding__error">{error}</p>}
-      <button
-        type="button"
-        className="onboarding__button"
-        onClick={handleNext}
-        disabled={!input.trim()}
-      >
-        {step < QUESTIONS.length - 1 ? 'Next' : 'Build my map'}
-      </button>
+      <div className="onboarding__actions">
+        {step > 0 && (
+          <button
+            type="button"
+            className="onboarding__button onboarding__button--secondary"
+            onClick={handleBack}
+          >
+            Back
+          </button>
+        )}
+
+        <button
+          type="button"
+          className="onboarding__button"
+          onClick={handleNext}
+          disabled={!input.trim()}
+        >
+          {step < QUESTIONS.length - 1 ? 'Next' : 'Build my map'}
+        </button>
+      </div>
     </div>
   )
 }
