@@ -1,0 +1,152 @@
+.saved-places-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 11.5rem;
+  max-width: 14rem;
+  padding: 0.625rem 0.75rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.saved-places-btn:hover {
+  border-color: var(--accent-border);
+}
+
+.saved-places-btn__count {
+  margin-left: auto;
+  min-width: 1.25rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-align: center;
+  color: #fff;
+  background: #a15f63;
+  border-radius: 999px;
+}
+
+.saved-places-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(8, 6, 13, 0.45);
+}
+
+.saved-places-modal {
+  width: min(28rem, 100%);
+  max-height: min(32rem, 85vh);
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.saved-places-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.saved-places-modal__title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.saved-places-modal__close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.saved-places-modal__close:hover {
+  background: var(--code-bg);
+}
+
+.saved-places-modal__empty {
+  margin: 0;
+  padding: 1.5rem 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.saved-places-modal__list {
+  margin: 0;
+  padding: 0.5rem 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.saved-places-modal__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.saved-places-modal__item:last-child {
+  border-bottom: none;
+}
+
+.saved-places-modal__item-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.saved-places-modal__item-body strong {
+  font-size: 0.95rem;
+  color: var(--text-h);
+}
+
+.saved-places-modal__city {
+  font-size: 0.8rem;
+  color: var(--text);
+  opacity: 0.8;
+}
+
+.saved-places-modal__remove {
+  flex-shrink: 0;
+  padding: 0.35rem 0.65rem;
+  font: inherit;
+  font-size: 0.78rem;
+  color: var(--text);
+  background: var(--code-bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.saved-places-modal__remove:hover {
+  border-color: var(--accent-border);
+}

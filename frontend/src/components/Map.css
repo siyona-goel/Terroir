@@ -27,3 +27,41 @@
   border-color: var(--accent, #aa3bff);
   background: var(--accent-bg, rgba(170, 59, 255, 0.1));
 }
+
+.saved-star-marker {
+  background: transparent;
+  border: none;
+}
+
+.popup-save {
+  margin-top: 0.5rem;
+}
+
+.popup-save__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.6rem;
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1;
+  background: var(--code-bg, #f4f3ec);
+  border: 1px solid var(--border, #e5e4e7);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.popup-save__btn:hover:not(:disabled) {
+  border-color: #2563eb;
+}
+
+.popup-save__btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.popup-save__btn--active {
+  border-color: #2563eb;
+  background: rgba(37, 99, 235, 0.1);
+  color: #1d4ed8;
+}

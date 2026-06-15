@@ -2,6 +2,7 @@ backend/venv/
 backend/.env
 backend/cache/
 backend/.cache/
+backend/supabase_saved_places.sql
 .cache/
 huggingface/
 backend/__pycache__/

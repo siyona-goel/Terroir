@@ -14,7 +14,7 @@ export default function MatchFilter({ minMatchPercent, onChange, visibleCount, t
       <input
         type="range"
         className="match-filter__slider"
-        min={0}
+        min={40}
         max={100}
         step={5}
         value={minMatchPercent}

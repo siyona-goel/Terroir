@@ -1,3 +1,4 @@
+import { SignInButton } from '@clerk/clerk-react'
 import { useEffect, useState } from 'react'
 import L from 'leaflet'
 import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
@@ -196,7 +197,7 @@ function LandingMapBackground({ visibleCount, hoverIndex }) {
   )
 }
 
-export default function Landing({ onGetStarted }) {
+export default function Landing({ isSignedIn, onGetStarted }) {
   const [visibleCount, setVisibleCount] = useState(0)
   const [hoverIndex, setHoverIndex] = useState(null)
 
@@ -226,6 +227,16 @@ export default function Landing({ onGetStarted }) {
     return () => clearInterval(tour)
   }, [visibleCount])
 
+  const ctaButton = (
+    <button
+      type="button"
+      className="landing__cta"
+      onClick={isSignedIn ? onGetStarted : undefined}
+    >
+      {isSignedIn ? 'Get started' : 'Sign in to get started'}
+    </button>
+  )
+
   return (
     <div className="landing">
       <LandingMapBackground
@@ -242,13 +253,11 @@ export default function Landing({ onGetStarted }) {
           Answer a few questions about what you love. We create a living map of
           places scored to match your taste, anywhere in the world.
         </p>
-        <button
-          type="button"
-          className="landing__cta"
-          onClick={onGetStarted}
-        >
-          Get Started
-        </button>
+        {isSignedIn ? (
+          ctaButton
+        ) : (
+          <SignInButton mode="modal">{ctaButton}</SignInButton>
+        )}
       </header>
     </div>
   )

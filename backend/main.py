@@ -106,6 +106,65 @@ class FeedbackRequest(BaseModel):
     vote: Literal["thumbs_up", "thumbs_down"]
 
 
+class SavedPlaceRequest(BaseModel):
+    place: dict
+    city_name: str | None = None
+
+
+class SavedPlaceRemoveRequest(BaseModel):
+    place_id: int
+
+
+@app.get("/saved/load")
+async def load_saved_places(user_id: str = Depends(get_current_user)):
+    try:
+        result = (
+            supabase.table("saved_places")
+            .select("place_id, place, city_name, saved_at")
+            .eq("user_id", user_id)
+            .order("saved_at", desc=True)
+            .execute()
+        )
+    except Exception as exc:
+        logger.exception("Failed to load saved places for user %s", user_id)
+        raise HTTPException(status_code=502, detail="Could not load saved places") from exc
+    return {"places": result.data or []}
+
+
+@app.post("/saved/add")
+async def add_saved_place(req: SavedPlaceRequest, user_id: str = Depends(get_current_user)):
+    place_id = req.place.get("id")
+    if place_id is None:
+        raise HTTPException(status_code=400, detail="Place must include an id")
+    try:
+        supabase.table("saved_places").upsert(
+            {
+                "user_id": user_id,
+                "place_id": place_id,
+                "place": req.place,
+                "city_name": req.city_name,
+                "saved_at": datetime.now(timezone.utc).isoformat(),
+            },
+            on_conflict="user_id,place_id",
+        ).execute()
+    except Exception as exc:
+        logger.exception("Failed to save place for user %s", user_id)
+        raise HTTPException(status_code=502, detail="Could not save place") from exc
+    return {"success": True}
+
+
+@app.post("/saved/remove")
+async def remove_saved_place(req: SavedPlaceRemoveRequest, user_id: str = Depends(get_current_user)):
+    try:
+        supabase.table("saved_places").delete().eq("user_id", user_id).eq(
+            "place_id", req.place_id
+        ).execute()
+    except Exception as exc:
+        logger.exception("Failed to remove saved place for user %s", user_id)
+        raise HTTPException(status_code=502, detail="Could not remove saved place") from exc
+    return {"success": True}
+
+
 @app.post("/profile/save")
 async def save_profile(req: ProfileSaveRequest, user_id: str = Depends(get_current_user)):
     try:
