@@ -1,6 +1,6 @@
 /**
  * Static demo places for the landing page map (New York area).
- * Match % and reasons mirror the real app's popup style.
+ * Match %, reasons, and categories mirror the real app's popup style.
  */
 export const LANDING_MAP_CENTER = [40.7282, -73.9942]
 export const LANDING_MAP_ZOOM = 14
@@ -12,9 +12,12 @@ export const LANDING_DEMO_PLACES = [
     lat: 40.7301,
     lon: -74.0007,
     match: 94,
+    categories: ['Music venues', 'Food & drink'],
     reason: 'Matches your taste for live jazz and intimate late-night venues.',
     color: '#9e3c39',
     radius: 10,
+    saved: false,
+    vote: 'thumbs_up',
   },
   {
     id: 'landing-2',
@@ -22,9 +25,12 @@ export const LANDING_DEMO_PLACES = [
     lat: 40.7308,
     lon: -73.9973,
     match: 78,
+    categories: ['Parks & recreation'],
     reason: 'Great for your love of people-watching and relaxed outdoor afternoons.',
     color: '#d19c4d',
     radius: 7,
+    saved: true,
+    vote: null,
   },
   {
     id: 'landing-3',
@@ -32,9 +38,12 @@ export const LANDING_DEMO_PLACES = [
     lat: 40.7333,
     lon: -73.9903,
     match: 71,
+    categories: ['Shopping'],
     reason: 'Matches your quiet, browse-for-hours bookstore energy.',
     color: '#d19c4d',
     radius: 7,
+    saved: false,
+    vote: null,
   },
   {
     id: 'landing-4',
@@ -42,9 +51,12 @@ export const LANDING_DEMO_PLACES = [
     lat: 40.7614,
     lon: -73.9776,
     match: 88,
+    categories: ['Arts & culture'],
     reason: 'Matches your interest in contemporary art and curated exhibitions.',
     color: '#9e3c39',
     radius: 10,
+    saved: false,
+    vote: 'thumbs_up',
   },
   {
     id: 'landing-5',
@@ -52,9 +64,12 @@ export const LANDING_DEMO_PLACES = [
     lat: 40.7306,
     lon: -74.002,
     match: 62,
+    categories: ['Food & drink'],
     reason: 'Great for your love of a quick, classic slice on a casual city walk.',
     color: '#d19c4d',
     radius: 7,
+    saved: false,
+    vote: null,
   },
   {
     id: 'landing-6',
@@ -62,9 +77,12 @@ export const LANDING_DEMO_PLACES = [
     lat: 40.7024,
     lon: -73.9875,
     match: 85,
+    categories: ['Parks & recreation'],
     reason: 'Matches your preference for waterfront views and open space.',
     color: '#9e3c39',
     radius: 10,
+    saved: true,
+    vote: 'thumbs_up',
   },
   {
     id: 'landing-7',
@@ -72,8 +90,11 @@ export const LANDING_DEMO_PLACES = [
     lat: 40.7847,
     lon: -73.9762,
     match: 55,
+    categories: ['Food & drink'],
     reason: 'A cozy café fit for slow mornings and people-watching.',
     color: '#857272',
     radius: 5,
+    saved: false,
+    vote: 'thumbs_down',
   },
 ]

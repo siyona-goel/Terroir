@@ -1,13 +1,15 @@
 import { SignInButton } from '@clerk/clerk-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import L from 'leaflet'
 import { MapContainer, TileLayer, CircleMarker, useMap } from 'react-leaflet'
+import { Bookmark, ThumbsUp, ThumbsDown } from 'lucide-react'
 import {
   LANDING_DEMO_PLACES,
   LANDING_MAP_CENTER,
   LANDING_MAP_ZOOM,
 } from '../data/landingDemoPlaces'
 import 'leaflet/dist/leaflet.css'
+import '../components/Map.css'
 import './Landing.css'
 
 const MARKER_REVEAL_MS = 650
@@ -18,9 +20,9 @@ const CURSOR_H = 24
 const VIEWPORT_PAD = 16
 const TOOLTIP_OFFSET_X = 18
 const TOOLTIP_OFFSET_Y = 8
-/** Estimated tooltip size for flip/clamp (max-width 14rem + padding). */
-const TOOLTIP_W = 230
-const TOOLTIP_H = 88
+/** Fallback tooltip size before first layout measure (max-width 14rem + padding). */
+const TOOLTIP_W = 240
+const TOOLTIP_H = 280
 
 /** Fit map so every demo marker stays in view (prevents off-screen cursor targets). */
 function FitLandingBounds() {
@@ -54,36 +56,107 @@ function clampCursorPoint(x, y, width, height) {
 }
 
 /** Place tooltip beside cursor; flip above/below and left/right near edges. */
-function tooltipPosition(cursorX, cursorY, width, height) {
-  const roomAbove = cursorY - TOOLTIP_OFFSET_Y - TOOLTIP_H
-  const roomBelow = height - cursorY - TOOLTIP_OFFSET_Y - TOOLTIP_H
-  const placeAbove = roomAbove >= VIEWPORT_PAD || roomAbove >= roomBelow
+function tooltipPosition(
+  cursorX,
+  cursorY,
+  width,
+  height,
+  tooltipW = TOOLTIP_W,
+  tooltipH = TOOLTIP_H,
+) {
+  const pad = VIEWPORT_PAD
+  const roomAbove = cursorY - TOOLTIP_OFFSET_Y - tooltipH
+  const roomBelow =
+    height - cursorY - TOOLTIP_OFFSET_Y - CURSOR_H - tooltipH
+  const placeAbove =
+    roomAbove >= pad && (roomBelow < pad || roomAbove >= roomBelow)
 
   let left = cursorX + TOOLTIP_OFFSET_X
-  let top = placeAbove
-    ? cursorY - TOOLTIP_OFFSET_Y
-    : cursorY + TOOLTIP_OFFSET_Y + CURSOR_H
-
-  if (left + TOOLTIP_W > width - VIEWPORT_PAD) {
-    left = cursorX - TOOLTIP_W - TOOLTIP_OFFSET_X
+  if (left + tooltipW > width - pad) {
+    left = cursorX - tooltipW - TOOLTIP_OFFSET_X
   }
-  left = Math.min(
-    Math.max(left, VIEWPORT_PAD),
-    width - TOOLTIP_W - VIEWPORT_PAD,
-  )
+  left = Math.min(Math.max(left, pad), width - tooltipW - pad)
 
+  let top
   if (placeAbove) {
-    top = Math.max(top - TOOLTIP_H, VIEWPORT_PAD)
+    // `.landing-tooltip--above` anchors `top` to the tooltip's bottom edge.
+    top = cursorY - TOOLTIP_OFFSET_Y
+    top = Math.max(top, pad + tooltipH)
+    top = Math.min(top, height - pad)
   } else {
-    top = Math.min(top, height - TOOLTIP_H - VIEWPORT_PAD)
+    top = cursorY + TOOLTIP_OFFSET_Y + CURSOR_H
+    top = Math.max(top, pad)
+    top = Math.min(top, height - tooltipH - pad)
   }
 
   return { left, top, placeAbove }
 }
 
+function computeLandingOverlayLayout(map, place, tooltipEl) {
+  const { x: width, y: height } = map.getSize()
+  const raw = map.latLngToContainerPoint([place.lat, place.lon])
+  const cursor = clampCursorPoint(raw.x, raw.y, width, height)
+  const tooltipW = tooltipEl?.offsetWidth || TOOLTIP_W
+  const tooltipH = tooltipEl?.offsetHeight || TOOLTIP_H
+  const tooltip = tooltipPosition(
+    cursor.x,
+    cursor.y,
+    width,
+    height,
+    tooltipW,
+    tooltipH,
+  )
+  return { cursor, tooltip }
+}
+
+function LandingDemoPopup({ place }) {
+  return (
+    <>
+      <strong>{place.name}</strong>
+      {place.categories?.length > 0 && (
+        <>
+          <br />
+          <span className="landing-tooltip__categories">
+            {place.categories.join(' · ')}
+          </span>
+        </>
+      )}
+      <br />
+      Match: {place.match}%
+      <br />
+      <em>{place.reason}</em>
+      <div className="popup-save">
+        <span
+          className={`popup-save__btn${place.saved ? ' popup-save__btn--active' : ''}`}
+        >
+          <Bookmark size={14} aria-hidden />
+          {place.saved ? 'Saved' : 'Save place'}
+        </span>
+      </div>
+      <div className="popup-feedback">
+        <span
+          className={`popup-feedback__btn${place.vote === 'thumbs_up' ? ' popup-feedback__btn--active' : ''}`}
+          title="More like this"
+          aria-hidden
+        >
+          <ThumbsUp size={16} />
+        </span>
+        <span
+          className={`popup-feedback__btn${place.vote === 'thumbs_down' ? ' popup-feedback__btn--active' : ''}`}
+          title="Less like this"
+          aria-hidden
+        >
+          <ThumbsDown size={16} />
+        </span>
+      </div>
+    </>
+  )
+}
+
 /** Keeps cursor + tooltip aligned with map pan/zoom and marker lat/lng. */
 function LandingMapOverlay({ hoverIndex, visibleCount }) {
   const map = useMap()
+  const tooltipRef = useRef(null)
   const [layout, setLayout] = useState(null)
 
   const activePlace =
@@ -91,21 +164,14 @@ function LandingMapOverlay({ hoverIndex, visibleCount }) {
       ? LANDING_DEMO_PLACES[hoverIndex]
       : null
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!activePlace) {
       setLayout(null)
       return
     }
 
     const updatePosition = () => {
-      const { x: width, y: height } = map.getSize()
-      const raw = map.latLngToContainerPoint([
-        activePlace.lat,
-        activePlace.lon,
-      ])
-      const cursor = clampCursorPoint(raw.x, raw.y, width, height)
-      const tooltip = tooltipPosition(cursor.x, cursor.y, width, height)
-      setLayout({ cursor, tooltip })
+      setLayout(computeLandingOverlayLayout(map, activePlace, tooltipRef.current))
     }
 
     updatePosition()
@@ -115,9 +181,21 @@ function LandingMapOverlay({ hoverIndex, visibleCount }) {
     }
   }, [map, activePlace])
 
-  if (!layout || !activePlace) return null
+  useLayoutEffect(() => {
+    if (!activePlace || !tooltipRef.current) return
 
-  const { cursor, tooltip } = layout
+    const el = tooltipRef.current
+    const observer = new ResizeObserver(() => {
+      setLayout(computeLandingOverlayLayout(map, activePlace, el))
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [map, activePlace])
+
+  if (!activePlace) return null
+
+  const { cursor, tooltip } =
+    layout ?? computeLandingOverlayLayout(map, activePlace, null)
 
   return (
     <div className="landing-map-overlay" aria-hidden>
@@ -142,14 +220,11 @@ function LandingMapOverlay({ hoverIndex, visibleCount }) {
         </svg>
       </div>
       <div
+        ref={tooltipRef}
         className={`landing-tooltip${tooltip.placeAbove ? ' landing-tooltip--above' : ' landing-tooltip--below'}`}
         style={{ left: tooltip.left, top: tooltip.top }}
       >
-        <strong>{activePlace.name}</strong>
-        <br />
-        Match: {activePlace.match}%
-        <br />
-        <em>{activePlace.reason}</em>
+        <LandingDemoPopup place={activePlace} />
       </div>
     </div>
   )

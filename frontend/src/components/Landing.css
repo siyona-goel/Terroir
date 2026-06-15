@@ -98,6 +98,17 @@
   font-size: 0.78rem;
 }
 
+.landing-tooltip__categories {
+  font-size: 0.85em;
+  opacity: 0.85;
+}
+
+.landing-tooltip .popup-save__btn,
+.landing-tooltip .popup-feedback__btn {
+  cursor: default;
+  pointer-events: none;
+}
+
 @keyframes landing-tooltip-in-above {
   from {
     opacity: 0;
@@ -243,5 +254,9 @@
   .landing-tooltip {
     max-width: 11rem;
     font-size: 0.72rem;
+  }
+
+  .landing-tooltip .popup-save__btn {
+    font-size: 0.75rem;
   }
 }
