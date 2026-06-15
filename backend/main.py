@@ -35,7 +35,17 @@ app.add_middleware(
 )
 
 CLERK_SECRET_KEY = os.environ["CLERK_SECRET_KEY"]
-supabase = create_client(os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_KEY"])
+
+
+def _normalize_supabase_url(url: str) -> str:
+    """Strip trailing /rest/v1 so create_client does not double the path."""
+    return url.rstrip("/").removesuffix("/rest/v1")
+
+
+supabase = create_client(
+    _normalize_supabase_url(os.environ["SUPABASE_URL"]),
+    os.environ["SUPABASE_SERVICE_KEY"],
+)
 
 
 async def get_current_user(request: Request) -> str:
@@ -48,10 +58,9 @@ async def get_current_user(request: Request) -> str:
         ),
     )
     if not state.is_signed_in:
-        raise HTTPException(
-            status_code=401,
-            detail=state.reason or "Token verification failed",
-        )
+        reason = state.reason
+        detail = str(reason) if reason is not None else "Token verification failed"
+        raise HTTPException(status_code=401, detail=detail)
 
     user_id = state.payload.get("sub")
     if not user_id:

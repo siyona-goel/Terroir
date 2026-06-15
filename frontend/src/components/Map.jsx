@@ -31,6 +31,7 @@ export default function PlacesMap({
   center = [51.5074, -0.1278],
   userEmbedding,
   onFeedback,
+  getToken,
   /** Full-batch relative scores so popup % matches the match filter slider. */
   relativeScores: relativeScoresProp,
 }) {
@@ -67,11 +68,16 @@ export default function PlacesMap({
 
     setFeedbackLoading(place.id)
     try {
-      const res = await axios.post(`${API}/feedback`, {
-        user_embedding: userEmbedding,
-        place_description: place.description,
-        vote,
-      })
+      const token = getToken ? await getToken() : null
+      const res = await axios.post(
+        `${API}/feedback`,
+        {
+          user_embedding: userEmbedding,
+          place_description: place.description,
+          vote,
+        },
+        token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+      )
       setVotes((prev) => ({ ...prev, [place.id]: vote }))
       onFeedback(res.data.embedding)
     } catch {

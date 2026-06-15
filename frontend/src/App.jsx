@@ -225,7 +225,7 @@ function AuthedApp() {
           totalCount={places.length}
         />
       </div>
-      <div
+      {/* <div
         style={{
           position: 'absolute',
           top: 16,
@@ -240,7 +240,7 @@ function AuthedApp() {
         >
           Edit taste profile
         </button>
-      </div>
+      </div> */}
       {loadError && (
         <div
           style={{
@@ -271,7 +271,7 @@ function AuthedApp() {
         <div
           style={{
             position: 'absolute',
-            top: 60,
+            top: 90,
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 1000,
@@ -290,6 +290,7 @@ function AuthedApp() {
         center={[city.lat, city.lon]}
         userEmbedding={userProfile.embedding}
         onFeedback={handleFeedback}
+        getToken={getToken}
         relativeScores={relativeScores}
       />
     </div>
