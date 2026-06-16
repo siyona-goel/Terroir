@@ -82,6 +82,7 @@ class ProfileRequest(BaseModel):
 class ProfileSaveRequest(BaseModel):
     profile: dict
     embedding: list[float]
+    answers: list[str] | None = None
 
 
 class ProfileFeedbackRequest(BaseModel):
@@ -167,14 +168,17 @@ async def remove_saved_place(req: SavedPlaceRemoveRequest, user_id: str = Depend
 
 @app.post("/profile/save")
 async def save_profile(req: ProfileSaveRequest, user_id: str = Depends(get_current_user)):
+    row = {
+        "user_id": user_id,
+        "profile": req.profile,
+        "embedding": req.embedding,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if req.answers is not None:
+        row["answers"] = req.answers
     try:
         supabase.table("profiles").upsert(
-            {
-                "user_id": user_id,
-                "profile": req.profile,
-                "embedding": req.embedding,
-                "updated_at": datetime.now(timezone.utc).isoformat(),
-            },
+            row,
             on_conflict="user_id",
         ).execute()
     except Exception as exc:
@@ -186,17 +190,24 @@ async def save_profile(req: ProfileSaveRequest, user_id: str = Depends(get_curre
 @app.get("/profile/load")
 async def load_profile(user_id: str = Depends(get_current_user)):
     try:
-        result = supabase.table("profiles").select("profile, embedding").eq("user_id", user_id).maybe_single().execute()
+        result = (
+            supabase.table("profiles")
+            .select("profile, embedding, answers")
+            .eq("user_id", user_id)
+            .maybe_single()
+            .execute()
+        )
     except Exception as exc:
         logger.exception("Failed to load profile for user %s", user_id)
         raise HTTPException(status_code=502, detail="Could not load profile") from exc
 
     if result.data is None:
-        return {"profile": None, "embedding": None}
+        return {"profile": None, "embedding": None, "answers": None}
 
     return {
         "profile": result.data["profile"],
         "embedding": result.data["embedding"],
+        "answers": result.data.get("answers"),
     }
 
 

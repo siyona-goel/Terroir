@@ -65,3 +65,28 @@
   background: rgba(37, 99, 235, 0.1);
   color: #1d4ed8;
 }
+
+.edit-profile-btn {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.85rem;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.edit-profile-btn:hover {
+  border-color: var(--accent-border);
+}

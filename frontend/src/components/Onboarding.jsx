@@ -10,10 +10,18 @@ const QUESTIONS = [
   'Name a place you loved visiting and what made it special.',
 ]
 
-export default function Onboarding({ onComplete, getToken }) {
+export { QUESTIONS }
+
+export default function Onboarding({
+  onComplete,
+  getToken,
+  initialAnswers = [],
+  mode = 'create',
+  onCancel,
+}) {
   const [step, setStep] = useState(0)
-  const [answers, setAnswers] = useState([])
-  const [input, setInput] = useState('')
+  const [answers, setAnswers] = useState(() => [...initialAnswers])
+  const [input, setInput] = useState(() => initialAnswers[0] || '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
@@ -60,7 +68,7 @@ export default function Onboarding({ onComplete, getToken }) {
             headers: { Authorization: `Bearer ${token}` },
           },
         )
-        onComplete(res.data)
+        onComplete({ ...res.data, answers: newAnswers })
       } catch (err) {
         const detail = err.response?.data?.detail
         const message = Array.isArray(detail)
@@ -81,7 +89,11 @@ export default function Onboarding({ onComplete, getToken }) {
     return (
       <div className="onboarding onboarding--loading">
         <div className="onboarding__spinner" />
-        <p className="onboarding__status">Building your taste profile…</p>
+        <p className="onboarding__status">
+          {mode === 'edit'
+            ? 'Updating your taste profile'
+            : 'Building your taste profile'}
+        </p>
       </div>
     )
   }
@@ -89,6 +101,7 @@ export default function Onboarding({ onComplete, getToken }) {
   return (
     <div className="onboarding">
       <p className="onboarding__progress">
+        {mode === 'edit' ? 'Edit taste profile · ' : ''}
         {step + 1} of {QUESTIONS.length}
       </p>
       <p className="onboarding__question">{QUESTIONS[step]}</p>
@@ -102,6 +115,15 @@ export default function Onboarding({ onComplete, getToken }) {
       />
       {error && <p className="onboarding__error">{error}</p>}
       <div className="onboarding__actions">
+        {mode === 'edit' && onCancel && (
+          <button
+            type="button"
+            className="onboarding__button onboarding__button--secondary"
+            onClick={onCancel}
+          >
+            Cancel
+          </button>
+        )}
         {step > 0 && (
           <button
             type="button"
@@ -118,7 +140,11 @@ export default function Onboarding({ onComplete, getToken }) {
           onClick={handleNext}
           disabled={!input.trim()}
         >
-          {step < QUESTIONS.length - 1 ? 'Next' : 'Build my map'}
+          {step < QUESTIONS.length - 1
+            ? 'Next'
+            : mode === 'edit'
+              ? 'Update my profile'
+              : 'Build my map'}
         </button>
       </div>
     </div>
