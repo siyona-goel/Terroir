@@ -2,7 +2,7 @@
 
 I wanted a map that knew who I was when I travelled. So I built one.
 
-[insert landing page screenshot]
+<img width="959" height="470" alt="Screenshot 2026-06-17 001341" src="https://github.com/user-attachments/assets/43be85ae-0c0f-4bf1-aa1d-c774cfd4e611" />
 
 ## 🗺️ Overview
 
@@ -257,8 +257,19 @@ Terroir/
     ├── main.py
     ├── llm.py          Ollama calls (profile + match reasons)
     ├── embeddings.py   Hugging Face or local embeddings
+    ├── scoring.py      Scores and updates embeddings
     └── overpass.py     OpenStreetMap place fetching
 └── .gitignore
 └── README.md
 └── render.yaml
 ```
+
+## ✨ Screenshots of the Map in Action
+
+<img width="959" height="496" alt="Screenshot 2026-07-23 221004" src="https://github.com/user-attachments/assets/58ea19fa-7824-4264-9e11-0a0a894e5121" />
+
+<img width="959" height="496" alt="Screenshot 2026-07-23 224411" src="https://github.com/user-attachments/assets/c55ea65f-dbaf-4a65-9e6c-e3708f0d16f9" />
+
+<img width="959" height="497" alt="Screenshot 2026-07-23 225049" src="https://github.com/user-attachments/assets/2c8af525-ab63-49d4-a762-929cde2fd8ba" />
+
+<img width="959" height="497" alt="Screenshot 2026-07-23 225016" src="https://github.com/user-attachments/assets/cbb75e62-abcc-4fc4-84cd-a6550ecca366" />
