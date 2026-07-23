@@ -267,7 +267,11 @@ async def score_city(req: ScoreRequest, user_id: str = Depends(get_current_user)
         return []
 
     descriptions = [p["description"] for p in places]
-    embeddings = embed_batch(descriptions)
+    try:
+        embeddings = embed_batch(descriptions)
+    except RuntimeError as exc:
+        logger.exception("Embedding batch failed during scoring")
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
     for place, emb in zip(places, embeddings):
         place["embedding"] = emb
 
